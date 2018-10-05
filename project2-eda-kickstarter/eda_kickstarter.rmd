@@ -3,12 +3,12 @@ output: html_document
 editor_options: 
   chunk_output_type: inline
 ---
-# WINE QUALITY by HENRY HALIM
+Kickstarter EDA by HENRY HALIM
 ========================================================
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE, packages}
 
-# Load R Packages
+## Load R Packages
 
 library(ggplot2)
 library(dplyr)
@@ -17,16 +17,64 @@ library(RColorBrewer)
 
 ```
 
-```{r echo=FALSE, Load_the_Data}
+```{r include=FALSE, Load_the_Data}
+
+## Load csv file
+ks <- read.csv("ks-projects-201801.csv")
 
 ```
 
-```{r echo=FALSE, Dataframe_Summary}
+```{r include=FALSE, Dataframe_Summary}
+
+## column names and type
+str(ks)
+
+## dataset summary
+summary(ks)
 
 ```
 
-# Introduction
 
+## Introduction
+
+```{r echo=FALSE, show_table}
+
+## Show few rows of the dataset
+head(ks)
+
+```
+
+>Kickstarter is the world's largest funding platform focused on creativity and merchandising. This dataset contains 378661 projects from 2009 to 2017. It has 15 variables which are self explanatory except:
+>
+> * usd_pledged: conversion in US dollars of the pledged column (conversion done by kickstarter).
+> * usd pledge real: conversion in US dollars of the pledged column (conversion from Fixer.io API).
+> * usd goal real: conversion in US dollars of the goal column (conversion from Fixer.io API).
+
+>Before I start, I check whether the data set has NA values or not. The result is shown below:
+
+```{r echo=FALSE, check_na}
+
+## Check missing values
+sapply(ks, function(x) sum(is.na(x)))
+
+```
+
+> There are missing values in usd.pledged columns. In this analysis, I will use usd_pledged_real and usd_goal_real instead, because I want to compare everything in usd. Therefore, I will remove columns goal, pledged, usd.pledged. Then, I rename usd_pledged_real and usd_goal_real to usd_pledged and usd_goal. The new dataframe is shown below:
+
+```{r echo=FALSE, remove_rename_cols}
+
+## Remove unwanted columns
+ks <- subset(ks, select = -c(goal, pledged, usd.pledged))
+
+## Rename columns
+colnames(ks)[11] <- "usd_pledged"
+colnames(ks)[12] <- "usd_goal"
+
+## Show dataframe
+head(ks)
+
+```
+> The dataset is take from Kaggle (https://www.kaggle.com/kemical/kickstarter-projects).
 
 # Univariate Plots Section
 
