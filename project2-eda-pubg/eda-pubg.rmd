@@ -1,0 +1,247 @@
+---
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+PlayerUnknown's Battleground (PUBG) Analysis
+
+by Henry Halim
+========================================================
+
+> **Tip**: You will see quoted sections like this throughout the template to
+help you construct your report. Make sure that you remove these notes before
+you finish and submit your project!
+
+> **Tip**: One of the requirements of this project is that your code follows
+good formatting techniques, including limiting your lines to 80 characters or
+less. If you're using RStudio, go into Preferences \> Code \> Display to set up
+a margin line to help you keep track of this guideline!
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, packages}
+# Load all of the packages
+
+library(ggplot2)
+library(dplyr)
+library(RColorBrewer)
+library(gridExtra)
+```
+
+# Introduction
+
+>PlayerUnknown's Battleground (PUBG) is a an online multiplayer battle royale game developed and published by PUBG Corporation, a subsidiary of South Korean video game company Bluehole. In the game, up to one hundred people are dropped into an island and be last person survived to win the game. They can find weapons, vehicles, and other equipments through out the game. The game can be played in three different mode: solo, duo, and squad (3-4 people).
+>
+> In this exploratory data analysis, I try to uncover important parameters that lead to winning. Also, I will build a baseline model for winning prediction using regression.
+>
+> Before we start, let's load the dataset and see how it looks like.
+
+```{r echo=FALSE, Load_the_Data}
+# Load the Data
+
+pubg = read.csv('train.csv')
+
+head(pubg)
+```
+
+> These are the column descriptions:
+>
+>**DBNOs** - Number of enemy players knocked.<br>
+>**assists** - Number of enemy players this player damaged that were killed by teammates.<br>
+>**boosts** - Number of boost items used. <br>
+>**damageDealt** - Total damage dealt. Note: Self inflicted damage is subtracted. <br>
+>**headshotKills** - Number of enemy players killed with headshots. <br>
+>**heals** - Number of healing items used. <br>
+>**killPlace** - Ranking in match of number of enemy players killed. <br>
+>**killPoints** - Kills-based external ranking of player. (Think of this as an Elo ranking where only kills matter.) <br>
+>**killStreaks** - Max number of enemy players killed in a short amount of time. <br>
+>**kills** - Number of enemy players killed. <br>
+>**longestKill** - Longest distance between player and player killed at time of death. This may be misleading, as downing a player and driving away may lead to a large longestKill stat. <br>
+>**matchId** - Integer ID to identify match. There are no matches that are in both the training and testing set. <br>
+>**revives** - Number of times this player revived teammates. <br>
+>**rideDistance** - Total distance traveled in vehicles measured in meters. <br>
+>**roadKills** - Number of kills while in a vehicle. <br>
+>**swimDistance** - Total distance traveled by swimming measured in meters. <br>
+>**teamKills** - Number of times this player killed a teammate. <br>
+>**vehicleDestroys** - Number of vehicles destroyed. <br>
+>**walkDistance** - Total distance traveled on foot measured in meters. <br>
+>**weaponsAcquired** - Number of weapons picked up. <br>
+>**winPoints** - Win-based external ranking of player. (Think of this as an Elo ranking where only winning matters.) <br>
+>**groupId**- Integer ID to identify a group within a match. If the same group of players plays in different matches, they will have a different groupId each time. <br>
+>**numGroups** - Number of groups we have data for in the match. <br>
+>**maxPlace** - Worst placement we have data for in the match. This may not match with numGroups, as sometimes the data skips over placements. <br>
+>**winPlacePerc** - The target of prediction. This is a percentile winning placement, where 1 corresponds to 1st place, and 0 corresponds to last place in the match. It is calculated off of maxPlace, not numGroups, so it is possible to have missing chunks in a match. <br>
+>
+> I also look at a quick summary of the dataset:
+
+```{r echo=FALSE, summary}
+# Print Dataset summary
+
+summary(pubg)
+```
+
+>There is no missing values in the dataset, so I can consider this is a tidy dataset.
+>
+>Then, I make a categorical variable to indicate whether the game is in solo, duo, or squad mode.
+
+```{r echo=FALSE, create_mode}
+# create categorical variable for mode
+
+pubg$mode[pubg$numGroups > 50] <- "solo"
+pubg$mode[pubg$numGroups <= 50 & pubg$numGroups > 25] <- "duo"
+pubg$mode[pubg$numGroups <= 25] <- "squad"
+```
+
+# Univariate Plots Section
+
+> **Tip**: In this section, you should perform some preliminary exploration of
+your dataset. Run some summaries of the data and create univariate plots to
+understand the structure of the individual variables in your dataset. Don't
+forget to add a comment after each plot or closely-related group of plots!
+There should be multiple code chunks and text sections; the first one below is
+just to help you get started.
+
+```{r echo=FALSE, win_perc}
+p1 <- ggplot(aes(x = winPlacePerc), data = pubg, binwidth = 25) +
+        geom_histogram(fill = 'gold3', colour = 'black') +
+        facet_wrap(~mode, scales = "free_y") +
+        ggtitle('Winning Placement Percentage Distribution by Mode') +
+        xlab('Winning Placement Percentage') +
+        ylab('')
+p2 <- ggplot(aes(x= mode, y = winPlacePerc), data = pubg) +
+        geom_boxplot() +
+        ggtitle('Winning Placement Percentage Boxplot by Mode')
+        xlab('Mode')
+
+grid.arrange(p1, p2, ncol = 1)
+```
+
+```{r echo=FALSE, kill}
+ggplot(aes(x = kills), data = pubg, binwidth = 30) +
+  geom_bar(fill = 'gold3', colour = 'black') +
+  facet_wrap(~mode) +
+  coord_trans(y = 'sqrt') +
+  scale_x_continuous(limits = c(-1,20), breaks = seq(0,20,1))
+```
+
+> **Tip**: Make sure that you leave a blank line between the start / end of
+each code block and the end / start of your Markdown text so that it is
+formatted nicely in the knitted text. Note as well that text on consecutive
+lines is treated as a single space. Make sure you have a blank line between
+your paragraphs so that they too are formatted for easy readability.
+
+# Univariate Analysis
+
+> **Tip**: Now that you've completed your univariate explorations, it's time to
+reflect on and summarize what you've found. Use the questions below to help you
+gather your observations and add your own if you have other thoughts!
+
+### What is the structure of your dataset?
+
+### What is/are the main feature(s) of interest in your dataset?
+
+### What other features in the dataset do you think will help support your \
+investigation into your feature(s) of interest?
+
+### Did you create any new variables from existing variables in the dataset?
+
+### Of the features you investigated, were there any unusual distributions? \
+Did you perform any operations on the data to tidy, adjust, or change the form \
+of the data? If so, why did you do this?
+
+
+# Bivariate Plots Section
+
+> **Tip**: Based on what you saw in the univariate plots, what relationships
+between variables might be interesting to look at in this section? Don't limit
+yourself to relationships between a main output feature and one of the
+supporting variables. Try to look at relationships between supporting variables
+as well.
+
+```{r echo=FALSE, Bivariate_Plots}
+
+```
+
+# Bivariate Analysis
+
+> **Tip**: As before, summarize what you found in your bivariate explorations
+here. Use the questions below to guide your discussion.
+
+### Talk about some of the relationships you observed in this part of the \
+investigation. How did the feature(s) of interest vary with other features in \
+the dataset?
+
+### Did you observe any interesting relationships between the other features \
+(not the main feature(s) of interest)?
+
+### What was the strongest relationship you found?
+
+
+# Multivariate Plots Section
+
+> **Tip**: Now it's time to put everything together. Based on what you found in
+the bivariate plots section, create a few multivariate plots to investigate
+more complex interactions between variables. Make sure that the plots that you
+create here are justified by the plots you explored in the previous section. If
+you plan on creating any mathematical models, this is the section where you
+will do that.
+
+```{r echo=FALSE, Multivariate_Plots}
+
+```
+
+# Multivariate Analysis
+
+### Talk about some of the relationships you observed in this part of the \
+investigation. Were there features that strengthened each other in terms of \
+looking at your feature(s) of interest?
+
+### Were there any interesting or surprising interactions between features?
+
+### OPTIONAL: Did you create any models with your dataset? Discuss the \
+strengths and limitations of your model.
+
+------
+
+# Final Plots and Summary
+
+> **Tip**: You've done a lot of exploration and have built up an understanding
+of the structure of and relationships between the variables in your dataset.
+Here, you will select three plots from all of your previous exploration to
+present here as a summary of some of your most interesting findings. Make sure
+that you have refined your selected plots for good titling, axis labels (with
+units), and good aesthetic choices (e.g. color, transparency). After each plot,
+make sure you justify why you chose each plot by describing what it shows.
+
+### Plot One
+```{r echo=FALSE, Plot_One}
+
+```
+
+### Description One
+
+
+### Plot Two
+```{r echo=FALSE, Plot_Two}
+
+```
+
+### Description Two
+
+
+### Plot Three
+```{r echo=FALSE, Plot_Three}
+
+```
+
+### Description Three
+
+------
+
+# Reflection
+
+> **Tip**: Here's the final step! Reflect on the exploration you performed and
+the insights you found. What were some of the struggles that you went through?
+What went well? What was surprising? Make sure you include an insight into
+future work that could be done with the dataset.
+
+> **Tip**: Don't forget to remove this, and the other **Tip** sections before
+saving your final work and knitting the final report!
